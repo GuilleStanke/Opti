@@ -68,7 +68,5 @@ print(sectores)
 
 with open('parametros/poblacion_sectores.csv', mode='w', newline='') as file:
     writer = csv.writer(file)
-    
-    writer.writerow([i for i in range(len(sectores))])
 
     writer.writerow(sectores)

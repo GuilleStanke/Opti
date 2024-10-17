@@ -95,6 +95,6 @@ print(sectores)
 with open('parametros/ponderadores_sector.csv', mode='w', newline='') as file:
     writer = csv.writer(file)
     
-    writer.writerow([i for i in range(len(sectores))])
+
 
     writer.writerow(sectores)
