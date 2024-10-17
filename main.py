@@ -29,6 +29,9 @@ y = model.addVars(I, J, C, vtype=GRB.INTEGER, name="y")
 # n[i, j, c] = Si el camión del tipo c se envía al estanque en la posición (i, j)
 n = model.addVars(I, J, C, vtype=GRB.BINARY, name="n")
 
+#z[i, j, e] = Modelo del estanque "e" en posicion (i, j)
+z = model.addVars(I, J, E, vtype=GRB.BINARY, name="z")
+
 model.update()
 
 # ------------------- Parámetros -------------------------
@@ -69,6 +72,61 @@ t = 150000
 
 # ------------------- Restricciones ----------------------
 
+# 1) Se debe respetar el presupuesto:
+model.addConstr((sum(sum(sum((x[i, j, e]*ce) for e in E) for j in J) for i in I)) + (sum(sum(sum((y[i, j, c]*(cc + t)) for c in C) for j in J) for i in I)) <= m)
+
+# 2) Si no se construye un estanque en (i, j), entonces (i, j) no puede ser un punto de suministro:
+for j in J:
+    for i in I:
+        for s in S:
+            model.addConstr(sum(x[i, j, e] for e in E)) >= w[i, j, s]
+
+# 3) Solo se pueden construir estanques en lugares específicos:
+for j in J:
+    for i in I:
+        model.addConstr(1 - k[i, j] >= sum(x[i, j, e] for e in E))
+
+# 4) Se tiene que cumplir la demanda por sector:
+for s in S:
+    model.addConstr(sum(sum(q[i, j, s] for j in J) for i in I) >= ps*l)
+
+# 5) La cantidad de agua de un estanque que se destina los sectores no puede superar la capacidad máxima del estanque:
+for j in J:
+    for i in I:
+        model.addConstr(sum((x[i, j, e]*ve) for e in E) >= sum(q[i, j, s] for s in S))
+
+# 6) Si el estanque en (i, j) no suministra a (s), entonces la parte destinada del estanque en (i, j) a (s)  es 0:
+for j in J:
+    for i in I:
+        for s in S:
+            model.addConstr(sum((w[i, j, s]*ve) for e in E) >= q[i, j, s])
+
+# 7) Solo hay 1 tipo de estanque (e)  por estanque:
+for j in J:
+    for i in I:
+        model.addConstr(1 >= sum(x[i, j, e] for e in E))
+
+# 8) La cantidad de agua total que suministra un estanque a los sectores no puede superar a la cantidad de agua que le suministran los camiones al estanque.
+for j in J:
+    for i in I:
+        model.addConstr(sum((y[i, j, c]*vc) for c in C) >= sum(q[i, j, s] for s in S))
+
+# 9) El camión no va, si no hay estanque en  (i,j).
+for j in J:
+    for i in I:
+        model.addConstr(sum(y[i, j, c] for c in C) <= M * sum(x[i, j, e] for e in E))
+
+# 10) Si se decide no enviar un camión a (i,j) se envían cero camiones:           
+for j in J:
+    for i in I:
+        for c in C:
+            model.addConstr(y[i, j, c] <= M * n[i, j, c])
+
+# 11) No se envían camiones donde no pueden acceder:
+for j in J:
+    for i in I:
+        for c in C:
+            model.addConstr(n[i, j, c] <= p[i, j, c])
 
 
 # borrar esto
