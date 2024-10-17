@@ -39,7 +39,7 @@ model.update()
 ce = [1141567, 1815226, 2509080, 3919801, 5903205, 4774875]
 
 # ps poblacion sector
-poblaciones = pd.read_csv('parametros/poblacion_sector.csv', header=None).iloc[0].to_numpy()
+poblaciones = pd.read_csv('parametros/poblacion_sectores.csv', header=None).iloc[0].to_numpy()
 ps = {i: poblaciones[i] for i in range(len(poblaciones))}
 
 # m presupuesto
@@ -48,7 +48,10 @@ m = 7280000000
 # l demanda de agua por persona
 l = 172
 
-# n_s ponderador sector
+# ns ponderador sector
+ponderadores = pd.read_csv('parametros/ponderadores_sector.csv', header=None).iloc[0].to_numpy()
+ns = {i: ponderadores[i] for i in range(len(ponderadores))}
+print(ns)
 
 # kij si no se puede hacer estanque
 
@@ -73,10 +76,10 @@ t = 150000
 
 # borrar esto
 d_ijs = 1
-n_s = 1
+
 
 # ------------------- Función objetivo -------------------
-funcion_objetivo = quicksum(w[i, j, s] * n_s * d_ijs for s in S for i in I for j in J)
+funcion_objetivo = quicksum(w[i, j, s] * ns[s] * d_ijs for s in S for i in I for j in J)
 model.setObjective(funcion_objetivo, GRB.MINIMIZE)
 
 
