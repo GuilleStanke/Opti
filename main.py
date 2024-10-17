@@ -1,5 +1,7 @@
 from gurobipy import GRB, Model
 from gurobipy import quicksum
+import pandas as pd
+import numpy as np
 
 model = Model()
 model.setParam("TimeLimit", 1800)
@@ -37,6 +39,8 @@ model.update()
 ce = [1141567, 1815226, 2509080, 3919801, 5903205, 4774875]
 
 # ps poblacion sector
+poblaciones = pd.read_csv('parametros/poblacion_sector.csv', header=None).iloc[0].to_numpy()
+ps = {i: poblaciones[i] for i in range(len(poblaciones))}
 
 # m presupuesto
 m = 7280000000
