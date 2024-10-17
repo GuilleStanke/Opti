@@ -34,10 +34,10 @@ model.update()
 # ------------------- Parámetros -------------------------
 
 # dijs distancia
-df = pd.read_csv('parametros/distancias_estanques.csv')
+distancias = pd.read_csv('parametros/distancias_estanques.csv')
 dijs = {}
 
-for index, row in df.iterrows():
+for index, row in distancias.iterrows():
     sector = row['Sector']
     fila = row['Fila']
     columna = row['Columna']
@@ -62,6 +62,18 @@ l = 172
 # n_s ponderador sector
 
 # kij si no se puede hacer estanque
+validos = pd.read_csv('parametros/validez.csv')
+
+kij = {}
+
+for index, row in validos.iterrows():
+    fila = row['Fila']
+    columna = row['Columna']
+    validez = row['Validez']
+    clave = (fila, columna)
+    
+    kij[clave] = validez
+
 
 # ve volumen estanque
 ve = [10000, 15000, 20000, 30000, 35000, 40000]
