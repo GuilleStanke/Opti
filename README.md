@@ -15,13 +15,14 @@ Para asegurar la consistencia y facilidad de uso de los archivos CSV, sigue esta
 
 - **Columnas por Tipo de Dato**: Cada tipo de dato debe estar en su propia columna. Por ejemplo, para las distancias:
 En vez de tener el valor de distancia en la interseccion de (i,j) y s, hacer cada dato en cada columna:
+
+
 | sector | fila | columna | distancia |
 |--------|------|---------|-----------|
 | 0      | 0    | 0       | 12.5      |
 | 1      | 0    | 1       | 8.3       |
 | 2      | 0    | 2       | 15.7      |
 | 3      | 0    | 3       | 9.1       |
-
 Es decir el csv quedaria como:
 ```
 sector,fila,columna,distancia
