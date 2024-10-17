@@ -34,6 +34,17 @@ model.update()
 # ------------------- Parámetros -------------------------
 
 # dijs distancia
+df = pd.read_csv('parametros/distancias_estanques.csv')
+dijs = {}
+
+for index, row in df.iterrows():
+    sector = row['Sector']
+    fila = row['Fila']
+    columna = row['Columna']
+    distancia = row['Distancia']
+    clave = (fila, columna, sector)
+
+    dijs[clave] = distancia
 
 # ce costo modelo estanque
 ce = [1141567, 1815226, 2509080, 3919801, 5903205, 4774875]
