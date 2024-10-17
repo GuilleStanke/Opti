@@ -23,6 +23,8 @@ En vez de tener el valor de distancia en la interseccion de (i,j) y s, hacer cad
 | 1      | 0    | 1       | 8.3       |
 | 2      | 0    | 2       | 15.7      |
 | 3      | 0    | 3       | 9.1       |
+
+
 Es decir el csv quedaria como:
 ```
 sector,fila,columna,distancia
