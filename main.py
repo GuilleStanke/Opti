@@ -36,9 +36,9 @@ model.update()
 
 # ------------------- Parámetros -------------------------
 
-# dijs distancia
+# d_ijs distancia
 distancias = pd.read_csv('parametros/distancias_estanques.csv')
-dijs = {}
+d_ijs = {}
 
 for index, row in distancias.iterrows():
     sector = row['Sector']
@@ -47,14 +47,14 @@ for index, row in distancias.iterrows():
     distancia = row['Distancia']
     clave = (fila, columna, sector)
 
-    dijs[clave] = distancia
+    d_ijs[clave] = distancia
 
 # ce costo modelo estanque
 ce = [1141567, 1815226, 2509080, 3919801, 5903205, 4774875]
 
-# ps poblacion sector
+# p_s poblacion sector
 poblaciones = pd.read_csv('parametros/poblacion_sector.csv', header=None).iloc[0].to_numpy()
-ps = {i: poblaciones[i] for i in range(len(poblaciones))}
+p_s = {i: poblaciones[i] for i in range(len(poblaciones))}
 
 # m presupuesto
 m = 7280000000
@@ -64,10 +64,10 @@ l = 172
 
 # n_s ponderador sector
 
-# kij si no se puede hacer estanque
+# k_ij si no se puede hacer estanque
 validos = pd.read_csv('parametros/validez.csv')
 
-kij = {}
+k_ij = {}
 
 for index, row in validos.iterrows():
     fila = row['Fila']
@@ -75,7 +75,7 @@ for index, row in validos.iterrows():
     validez = row['Validez']
     clave = (fila, columna)
     
-    kij[clave] = validez
+    k_ij[clave] = validez
 
 
 # ve volumen estanque
@@ -84,11 +84,11 @@ ve = [10000, 15000, 20000, 30000, 35000, 40000]
 # t costo fijo camion
 t = 150000
 
-# cc costo de camion c
+# c_c costo de camion c
 
-# vc volumen de camion
+# v_c volumen de camion c
 
-# pijc si el camion c puede ir al estanque i, j
+# p_ijc si el camion c puede ir al estanque i, j
 
 # M un numero muy grande
 
@@ -96,7 +96,7 @@ t = 150000
 # ------------------- Restricciones ----------------------
 
 # 1) Se debe respetar el presupuesto:
-model.addConstr((sum(sum(sum((x[i, j, e]*ce) for e in E) for j in J) for i in I)) + (sum(sum(sum((y[i, j, c]*(cc + t)) for c in C) for j in J) for i in I)) <= m)
+model.addConstr((sum(sum(sum((x[i, j, e]*ce) for e in E) for j in J) for i in I)) + (sum(sum(sum((y[i, j, c]*(c_c + t)) for c in C) for j in J) for i in I)) <= m)
 
 # 2) Si no se construye un estanque en (i, j), entonces (i, j) no puede ser un punto de suministro:
 for j in J:
@@ -107,11 +107,11 @@ for j in J:
 # 3) Solo se pueden construir estanques en lugares específicos:
 for j in J:
     for i in I:
-        model.addConstr(1 - k[i, j] >= sum(x[i, j, e] for e in E))
+        model.addConstr(1 - k_ij[(i, j)] >= sum(x[i, j, e] for e in E))
 
 # 4) Se tiene que cumplir la demanda por sector:
 for s in S:
-    model.addConstr(sum(sum(q[i, j, s] for j in J) for i in I) >= ps*l)
+    model.addConstr(sum(sum(q[i, j, s] for j in J) for i in I) >= p_s*l)
 
 # 5) La cantidad de agua de un estanque que se destina los sectores no puede superar la capacidad máxima del estanque:
 for j in J:
@@ -132,7 +132,7 @@ for j in J:
 # 8) La cantidad de agua total que suministra un estanque a los sectores no puede superar a la cantidad de agua que le suministran los camiones al estanque.
 for j in J:
     for i in I:
-        model.addConstr(sum((y[i, j, c]*vc) for c in C) >= sum(q[i, j, s] for s in S))
+        model.addConstr(sum((y[i, j, c]*v_c) for c in C) >= sum(q[i, j, s] for s in S))
 
 # 9) El camión no va, si no hay estanque en  (i,j).
 for j in J:
@@ -149,7 +149,7 @@ for j in J:
 for j in J:
     for i in I:
         for c in C:
-            model.addConstr(n[i, j, c] <= p[i, j, c])
+            model.addConstr(n[i, j, c] <= p_ijc[i, j, c])
 
 
 # borrar esto
