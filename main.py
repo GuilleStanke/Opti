@@ -5,6 +5,8 @@ import numpy as np
 
 model = Model()
 model.setParam("TimeLimit", 1800)
+# model.setParam("NumericFocus", 3) # ayuda a mitigar problemas numéricos
+
 
 # ------------------- Conjuntos -------------------
 I = range(0, 45) # Filas de posiciones de estanques
@@ -50,10 +52,10 @@ for index, row in distancias.iterrows():
     d_ijs[clave] = distancia
 
 # ce costo modelo estanque
-ce = [1141567, 1815226, 2509080, 3919801, 5903205, 4774875]
+c_e = [1141567, 1815226, 2509080, 3919801, 5903205, 4774875]
 
 # p_s poblacion sector
-poblaciones = pd.read_csv('parametros/poblacion_sector.csv', header=None).iloc[0].to_numpy()
+poblaciones = pd.read_csv('parametros/poblacion_sectores.csv', header=None).iloc[0].to_numpy()
 p_s = {i: poblaciones[i] for i in range(len(poblaciones))}
 
 # m presupuesto
@@ -63,6 +65,8 @@ m = 7280000000
 l = 172
 
 # n_s ponderador sector
+ponderadores = pd.read_csv('parametros/ponderadores_sector.csv', header=None).iloc[0].to_numpy()
+n_s = {i: ponderadores[i] for i in range(len(ponderadores))}
 
 # k_ij si no se puede hacer estanque
 validos = pd.read_csv('parametros/validez.csv')
@@ -77,88 +81,158 @@ for index, row in validos.iterrows():
     
     k_ij[clave] = validez
 
-
 # ve volumen estanque
-ve = [10000, 15000, 20000, 30000, 35000, 40000]
+v_e = [10000, 15000, 20000, 30000, 35000, 40000]
 
 # t costo fijo camion
 t = 150000
 
 # c_c costo de camion c
+c_c = [90000, 130000, 165000, 225000, 300000]
 
 # v_c volumen de camion c
+v_c = [1000, 5000, 10000, 20000, 30000]
 
 # p_ijc si el camion c puede ir al estanque i, j
+validos = pd.read_csv('parametros/validez_camiones_bueno.csv')
+
+p_ijc = {}
+
+for index, row in validos.iterrows():
+    fila = int(row['Fila'])
+    columna = int(row['Columna'])
+    validez = int(row['Validez'])
+    camion = int(row['Camion'])
+    clave = (fila, columna, camion)
+    
+    p_ijc[clave] = validez
 
 # M un numero muy grande
-
+M = 1000000000000
 
 # ------------------- Restricciones ----------------------
 
 # 1) Se debe respetar el presupuesto:
-model.addConstr((sum(sum(sum((x[i, j, e]*ce) for e in E) for j in J) for i in I)) + (sum(sum(sum((y[i, j, c]*(c_c + t)) for c in C) for j in J) for i in I)) <= m)
+model.addConstr((quicksum(quicksum(quicksum((x[i, j, e]*c_e[e]) for e in E) for j in J) for i in I)) + (quicksum(quicksum(quicksum((y[i, j, c]*(c_c[c] + t)) for c in C) for j in J) for i in I)) <= m, name='R1')
+print("R1")
 
 # 2) Si no se construye un estanque en (i, j), entonces (i, j) no puede ser un punto de suministro:
 for j in J:
     for i in I:
         for s in S:
-            model.addConstr(sum(x[i, j, e] for e in E)) >= w[i, j, s]
+            model.addConstr(quicksum(x[i, j, e] for e in E) >= w[i, j, s], name='R2')
+print("R2")
 
 # 3) Solo se pueden construir estanques en lugares específicos:
 for j in J:
     for i in I:
-        model.addConstr(1 - k_ij[(i, j)] >= sum(x[i, j, e] for e in E))
+        model.addConstr(quicksum(x[i, j, e] for e in E) <= 1 - k_ij[(i, j)], name='R3')
+print("R3")
 
 # 4) Se tiene que cumplir la demanda por sector:
 for s in S:
-    model.addConstr(sum(sum(q[i, j, s] for j in J) for i in I) >= p_s*l)
+    model.addConstr(quicksum(quicksum(q[i, j, s] for j in J) for i in I) >= p_s[s]*l, name='R4')
+print("R4")
 
 # 5) La cantidad de agua de un estanque que se destina los sectores no puede superar la capacidad máxima del estanque:
 for j in J:
     for i in I:
-        model.addConstr(sum((x[i, j, e]*ve) for e in E) >= sum(q[i, j, s] for s in S))
+        model.addConstr(quicksum((x[i, j, e]*v_e[e]) for e in E) >= quicksum(q[i, j, s] for s in S), name='R5')
+print("R5")
 
 # 6) Si el estanque en (i, j) no suministra a (s), entonces la parte destinada del estanque en (i, j) a (s)  es 0:
 for j in J:
     for i in I:
         for s in S:
-            model.addConstr(sum((w[i, j, s]*ve) for e in E) >= q[i, j, s])
+            model.addConstr(quicksum((w[i, j, s] * v_e[e]) for e in E) >= q[i, j, s], name='R6')
+print("R6")
 
 # 7) Solo hay 1 tipo de estanque (e)  por estanque:
 for j in J:
     for i in I:
-        model.addConstr(1 >= sum(x[i, j, e] for e in E))
+        model.addConstr(1 >= quicksum(x[i, j, e] for e in E), name='R7')
+print("R7")
 
 # 8) La cantidad de agua total que suministra un estanque a los sectores no puede superar a la cantidad de agua que le suministran los camiones al estanque.
 for j in J:
     for i in I:
-        model.addConstr(sum((y[i, j, c]*v_c) for c in C) >= sum(q[i, j, s] for s in S))
+        model.addConstr(quicksum((y[i, j, c]*v_c[c]) for c in C) >= quicksum(q[i, j, s] for s in S), name='R8')
+print("R8")
 
 # 9) El camión no va, si no hay estanque en  (i,j).
 for j in J:
     for i in I:
-        model.addConstr(sum(y[i, j, c] for c in C) <= M * sum(x[i, j, e] for e in E))
+        model.addConstr(quicksum(y[i, j, c] for c in C) <= quicksum(M * x[i, j, e] for e in E), name='R9')
+print("R9")
 
 # 10) Si se decide no enviar un camión a (i,j) se envían cero camiones:           
 for j in J:
     for i in I:
         for c in C:
-            model.addConstr(y[i, j, c] <= M * n[i, j, c])
+            model.addConstr(y[i, j, c] <= M * n[i, j, c], name='R10')
+print("R10")
 
 # 11) No se envían camiones donde no pueden acceder:
 for j in J:
     for i in I:
         for c in C:
-            model.addConstr(n[i, j, c] <= p_ijc[i, j, c])
+            model.addConstr(n[i, j, c] <= p_ijc[(i, j, c)], name='R11')
+print("R11")
 
-
-# borrar esto
-d_ijs = 1
-n_s = 1
+# 12) La cantidad de agua que lleva un camion tipo (c) al estanque en (i,j)no puede superar la capacidad del estanque tipo (e).
+for j in J:
+    for i in I:
+        model.addConstr(quicksum((y[i, j, c]*v_c[c]) for c in C) <= quicksum((x[i, j, e]*v_e[e]) for e in E), name='R2')
+print("R12")
 
 # ------------------- Función objetivo -------------------
-funcion_objetivo = quicksum(w[i, j, s] * n_s * d_ijs for s in S for i in I for j in J)
+funcion_objetivo = quicksum(w[i, j, s] * n_s[s] * d_ijs[(i, j, s)] for s in S for i in I for j in J)
 model.setObjective(funcion_objetivo, GRB.MINIMIZE)
+model.optimize()
 
+# # Detectar infeasibilidad si el modelo es infactible
+# if model.Status == GRB.INFEASIBLE:
+#     print("El modelo es infactible. Generando el archivo .ilp para diagnóstico...")
+#     model.computeIIS()
+#     model.write("model.ilp")
+#     print("Archivo 'model.ilp' generado con las restricciones problemáticas.")
+
+# Tiempo de ejecucion
+tiempo_ejecucion = model.Runtime
+# Valor objetivo:
+valor_objetivo = model.ObjVal
+
+print("----------------------------")
+print(f"Valor onjetivo: {valor_objetivo}")
+print("----------------------------")
+
+print("Variables:\n")
+for i in I:
+    for j in J:
+        for e in E:
+            print(f'X_({i, j, e}): {x[i, j, e].x}')
+
+for i in I:
+    for j in J:
+        for s in S:
+            print(f'W_({i, j, s}): {w[i, j, e].x}')
+
+for i in I:
+    for j in J:
+        for s in S:
+            print(f'Q_({i, j, s}): {q[i, j, e].x}')
+
+for i in I:
+    for j in J:
+        for c in C:
+            print(f'Y_({i, j, c}): {y[i, j, c].x}')
+
+for i in I:
+    for j in J:
+        for c in C:
+            print(f'N_({i, j, c}): {n[i, j, c].x}')
+
+
+print(f"Tiempo: {tiempo_ejecucion}")
 
 
