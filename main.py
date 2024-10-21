@@ -185,6 +185,14 @@ for j in J:
         model.addConstr(quicksum((y[i, j, c]*v_c[c]) for c in C) <= quicksum((x[i, j, e]*v_e[e]) for e in E), name='R2')
 print("R12")
 
+
+
+# Nuevas
+for j in J:
+    for i in I:
+        model.addConstr(quicksum((x[i, j, e]) for e in E) <= quicksum(w[i, j, s] for s in S), name='R13')
+
+
 # ------------------- Función objetivo -------------------
 funcion_objetivo = quicksum(w[i, j, s] * n_s[s] * d_ijs[(i, j, s)] for s in S for i in I for j in J)
 model.setObjective(funcion_objetivo, GRB.MINIMIZE)
@@ -206,33 +214,57 @@ print("----------------------------")
 print(f"Valor onjetivo: {valor_objetivo}")
 print("----------------------------")
 
+num_sol = 0
 print("Variables:\n")
+cantidad_x = 0
 for i in I:
     for j in J:
         for e in E:
-            print(f'X_({i, j, e}): {x[i, j, e].x}')
+            if x[i, j, e].x != 0:
+                print(f'X_({i, j, e}): {x[i, j, e].x}')
+                num_sol += 1
+                cantidad_x += 1
+print(f'Cantidad de x: {cantidad_x}')
 
 for i in I:
     for j in J:
         for s in S:
-            print(f'W_({i, j, s}): {w[i, j, e].x}')
+            if w[i, j, s].x != 0 and q[i, j, s].x != 0:
+                print(f'W_({i, j, s}): {w[i, j, s].x}   --   Q_({i, j, s}): {q[i, j, s].x}')
+                num_sol += 1
+
+
 
 for i in I:
     for j in J:
-        for s in S:
-            print(f'Q_({i, j, s}): {q[i, j, e].x}')
+        if x[i, j, 5].x == 0:
+            suma_w = quicksum(w[i, j, s].x for s in S)
+            suma_q = quicksum(q[i, j, s].x for s in S)
+            if suma_w != 0 or suma_q != 0:
+                print(f'Estanque en ({i}, {j}) esta mal')
 
-for i in I:
-    for j in J:
-        for c in C:
-            print(f'Y_({i, j, c}): {y[i, j, c].x}')
+# for i in I:
+#     for j in J:
+#         for s in S:
+#             if q[i, j, s].x != 0:
+#                 print(f'Q_({i, j, s}): {q[i, j, s].x}')
+#                 num_sol += 1
 
-for i in I:
-    for j in J:
-        for c in C:
-            print(f'N_({i, j, c}): {n[i, j, c].x}')
+# for i in I:
+#     for j in J:
+#         for c in C:
+#             if y[i, j, c].x != 0:
+#                 print(f'Y_({i, j, c}): {y[i, j, c].x}')
+#                 num_sol += 1
+
+# for i in I:
+#     for j in J:
+#         for c in C:
+#             if n[i, j, c].x != 0:
+#                 print(f'N_({i, j, c}): {n[i, j, c].x}')
+#                 num_sol += 1
 
 
 print(f"Tiempo: {tiempo_ejecucion}")
 
-
+print(f'num soluciones: {num_sol}')
