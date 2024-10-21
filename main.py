@@ -5,7 +5,6 @@ import numpy as np
 
 model = Model()
 model.setParam("TimeLimit", 1800)
-# model.setParam("NumericFocus", 3) # ayuda a mitigar problemas numéricos
 
 
 # ------------------- Conjuntos -------------------
@@ -62,14 +61,14 @@ p_s = {i: poblaciones[i] for i in range(len(poblaciones))}
 m = 7280000000
 
 # l demanda de agua por persona
-l = 1
+l = 60
 
 # n_s ponderador sector
 ponderadores = pd.read_csv('parametros/ponderadores_sector.csv', header=None).iloc[0].to_numpy()
 n_s = {i: ponderadores[i] for i in range(len(ponderadores))}
 
 # k_ij si no se puede hacer estanque
-validos = pd.read_csv('parametros/validez.csv')
+validos = pd.read_csv('parametros/validez_copia.csv')
 
 k_ij = {}
 
@@ -88,7 +87,7 @@ v_e = [10000, 15000, 20000, 30000, 35000, 40000]
 t = 150000
 
 # c_c costo de camion c
-c_c = [90000, 130000, 165000, 225000, 300000]
+c_c = [120000, 205000, 464000, 776000, 1056000]
 
 # v_c volumen de camion c
 v_c = [1000, 5000, 10000, 20000, 30000]
@@ -160,10 +159,10 @@ for j in J:
 print("R8")
 
 # 9) El camión no va, si no hay estanque en  (i,j).
-for j in J:
-    for i in I:
-        model.addConstr(quicksum(y[i, j, c] for c in C) <= quicksum(M * x[i, j, e] for e in E), name='R9')
-print("R9")
+# for j in J:
+#     for i in I:
+#         model.addConstr(quicksum(y[i, j, c] for c in C) <= quicksum(M * x[i, j, e] for e in E), name='R9')
+# print("R9")
 
 # 10) Si se decide no enviar un camión a (i,j) se envían cero camiones:           
 for j in J:
@@ -199,18 +198,22 @@ for j in J:
             model.addConstr(quicksum(x[i, j, e] for e in E) >= n[i, j, c], name='R14')
 print("R14")
 
+for i in I:
+    for j in J:
+        model.addConstr(quicksum(x[i, j, e] for e in E) <= quicksum(n[i, j, c] for c in C), name='R15')
+print("R15")
+
+for i in I:
+    for j in J:
+        for c in C:
+            model.addConstr(n[i, j, c] <= y[i, j, c], name='R16')
+print("R16")
 
 # ------------------- Función objetivo -------------------
 funcion_objetivo = quicksum(w[i, j, s] * n_s[s] * d_ijs[(i, j, s)] for s in S for i in I for j in J)
 model.setObjective(funcion_objetivo, GRB.MINIMIZE)
 model.optimize()
 
-# # Detectar infeasibilidad si el modelo es infactible
-# if model.Status == GRB.INFEASIBLE:
-#     print("El modelo es infactible. Generando el archivo .ilp para diagnóstico...")
-#     model.computeIIS()
-#     model.write("model.ilp")
-#     print("Archivo 'model.ilp' generado con las restricciones problemáticas.")
 
 # Tiempo de ejecucion
 tiempo_ejecucion = model.Runtime
@@ -228,7 +231,8 @@ for i in I:
     for j in J:
         for e in E:
             if x[i, j, e].x != 0:
-                print(f'X_({i, j, e}): {x[i, j, e].x}')
+                if e != 5:
+                    print(f'X_({i, j, e}): {x[i, j, e].x}')
                 num_sol += 1
                 cantidad_x += 1
 print(f'Cantidad de x: {cantidad_x}')
@@ -246,7 +250,10 @@ for i in I:
     for j in J:
         suma_w = 0
         suma_q = 0
-        if x[i, j, 5].x == 0:
+        suma_x = 0
+        for e in E:
+            suma_x += x[i, j, e].x
+        if suma_x == 0:
             for s in S:
                 suma_w += w[i, j, s].x
                 suma_q += q[i, j, s].x
@@ -258,35 +265,46 @@ for i in I:
 for i in I:
     for j in J:
         suma_w = 0
-        if x[i, j, 5].x == 1:
+        suma_x = 0
+        for e in E:
+            suma_x += x[i, j, e].x
+        if suma_x == 1:
             for s in S:
                 suma_w += w[i, j, s].x
             if suma_w < 1:
-                print(f'Estanque en ({i}, {j}) esta mal')
+                print(f'Estanque en ({i}, {j}) esta mallll')
 
 for i in I:
     for j in J:
         suma_n = 0
         suma_y = 0
-        if x[i, j, 5].x == 1:
+        suma_x = 0
+        for e in E:
+            suma_x += x[i, j, e].x
+        if suma_x >= 1:
             for c in C:
                 suma_n += n[i, j, c].x
                 suma_y += y[i, j, c].x
             if suma_n < 1 or suma_y < 1:
-                print(f'Estanque en ({i}, {j}) esta mal')
+                print(f'Estanque en ({i}, {j}) esta maaaaal')
+                print(f"suma N: {suma_n}")
+                print(f"suma Y: {suma_y}")
+                print(f"suma X: {suma_x}")
 
 for i in I:
     for j in J:
         suma_n = 0
         suma_y = 0
-        if x[i, j, 5].x == 0:
+        suma_x = 0
+        for e in E:
+            suma_x += x[i, j, e].x
+        if suma_x == 0:
             for c in C:
                 suma_n += n[i, j, c].x
                 suma_y += y[i, j, c].x
             if suma_n > 0 or suma_y > 0:
-                print(f'Estanque en ({i}, {j}) esta mal')
+                print(f'Estanque en ({i}, {j}) esta mmmmmal')
 
-        
 
 # for i in I:
 #     for j in J:
