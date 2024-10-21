@@ -62,7 +62,7 @@ p_s = {i: poblaciones[i] for i in range(len(poblaciones))}
 m = 7280000000
 
 # l demanda de agua por persona
-l = 172
+l = 1
 
 # n_s ponderador sector
 ponderadores = pd.read_csv('parametros/ponderadores_sector.csv', header=None).iloc[0].to_numpy()
@@ -191,6 +191,13 @@ print("R12")
 for j in J:
     for i in I:
         model.addConstr(quicksum((x[i, j, e]) for e in E) <= quicksum(w[i, j, s] for s in S), name='R13')
+print("R13")
+
+for j in J:
+    for i in I:
+        for c in C:
+            model.addConstr(quicksum(x[i, j, e] for e in E) >= n[i, j, c], name='R14')
+print("R14")
 
 
 # ------------------- Función objetivo -------------------
@@ -245,6 +252,40 @@ for i in I:
                 suma_q += q[i, j, s].x
             if suma_w != 0 or suma_q != 0:
                 print(f'Estanque en ({i}, {j}) esta mal')
+
+
+# si xije es 1, la suma de W es mayor o igual a 1, imprimir casos conrtrarios
+for i in I:
+    for j in J:
+        suma_w = 0
+        if x[i, j, 5].x == 1:
+            for s in S:
+                suma_w += w[i, j, s].x
+            if suma_w < 1:
+                print(f'Estanque en ({i}, {j}) esta mal')
+
+for i in I:
+    for j in J:
+        suma_n = 0
+        suma_y = 0
+        if x[i, j, 5].x == 1:
+            for c in C:
+                suma_n += n[i, j, c].x
+                suma_y += y[i, j, c].x
+            if suma_n < 1 or suma_y < 1:
+                print(f'Estanque en ({i}, {j}) esta mal')
+
+for i in I:
+    for j in J:
+        suma_n = 0
+        suma_y = 0
+        if x[i, j, 5].x == 0:
+            for c in C:
+                suma_n += n[i, j, c].x
+                suma_y += y[i, j, c].x
+            if suma_n > 0 or suma_y > 0:
+                print(f'Estanque en ({i}, {j}) esta mal')
+
         
 
 # for i in I:
