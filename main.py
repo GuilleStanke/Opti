@@ -237,11 +237,15 @@ for i in I:
 
 for i in I:
     for j in J:
+        suma_w = 0
+        suma_q = 0
         if x[i, j, 5].x == 0:
-            suma_w = quicksum(w[i, j, s].x for s in S)
-            suma_q = quicksum(q[i, j, s].x for s in S)
+            for s in S:
+                suma_w += w[i, j, s].x
+                suma_q += q[i, j, s].x
             if suma_w != 0 or suma_q != 0:
                 print(f'Estanque en ({i}, {j}) esta mal')
+        
 
 # for i in I:
 #     for j in J:
