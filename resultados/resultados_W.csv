@@ -1,4 +1,4 @@
-Variable W: i j s 
+Variable W: resul, i, j, s 
 0, 0, 0, 0 
 0, 0, 0, 1 
 0, 0, 0, 2 

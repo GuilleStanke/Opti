@@ -1,4 +1,4 @@
-Variable X: i j e 
+Variable X: resul, i, j, e 
 0, 0, 0, 0 
 0, 0, 0, 1 
 0, 0, 0, 2 

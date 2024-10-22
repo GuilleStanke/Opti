@@ -329,35 +329,35 @@ for i in I:
 #                 num_sol += 1
 
 with open("resultados/resultados_N.csv", "w") as archivo: 
-    archivo.write("Variable N: i j c")
+    archivo.write("Variable N: resul, i, j, c")
     for i in I:
         for j in J:
             for c in C:
                 archivo.write(f" \n{int(n[i,j,c].x)}, {i}, {j}, {c}")
 
 with open("resultados/resultados_Q.csv", "w") as archivo: 
-    archivo.write("Variable Q: i j s")
+    archivo.write("Variable Q: resul, i, j, s")
     for i in I:
         for j in J:
             for s in S:
                 archivo.write(f" \n{int(q[i,j,s].x)}, {i}, {j}, {s}")
 
 with open("resultados/resultados_W.csv", "w") as archivo: 
-    archivo.write("Variable W: i j s")
+    archivo.write("Variable W: resul, i, j, s")
     for i in I:
         for j in J:
             for s in S:
                 archivo.write(f" \n{int(w[i,j,s].x)}, {i}, {j}, {s}")
 
 with open("resultados/resultados_X.csv", "w") as archivo: 
-    archivo.write("Variable X: i j e")
+    archivo.write("Variable X: resul, i, j, e")
     for i in I:
         for j in J:
             for e in E:
                 archivo.write(f" \n{int(x[i,j,e].x)}, {i}, {j}, {e}")
 
 with open("resultados/resultados_Y.csv", "w") as archivo: 
-    archivo.write("Variable Y: i j c")
+    archivo.write("Variable Y: resul, i, j, c")
     for i in I:
         for j in J:
             for c in C:

@@ -1,4 +1,4 @@
-Variable Y: i j c 
+Variable Y: resul, i, j, c 
 0, 0, 0, 0 
 0, 0, 0, 1 
 0, 0, 0, 2 

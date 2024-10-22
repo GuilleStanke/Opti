@@ -1,4 +1,4 @@
-Variable N: i j c 
+Variable N: resul, i, j, c 
 0, 0, 0, 0 
 0, 0, 0, 1 
 0, 0, 0, 2 

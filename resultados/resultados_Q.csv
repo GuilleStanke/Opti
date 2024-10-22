@@ -1,4 +1,4 @@
-Variable Q: i j s 
+Variable Q: resul, i, j, s 
 0, 0, 0, 0 
 0, 0, 0, 1 
 0, 0, 0, 2 
