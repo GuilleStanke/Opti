@@ -30,8 +30,6 @@ y = model.addVars(I, J, C, vtype=GRB.INTEGER, name="y")
 # n[i, j, c] = Si el camión del tipo c se envía al estanque en la posición (i, j)
 n = model.addVars(I, J, C, vtype=GRB.BINARY, name="n")
 
-#z[i, j, e] = Modelo del estanque "e" en posicion (i, j)
-z = model.addVars(I, J, E, vtype=GRB.BINARY, name="z")
 
 model.update()
 
@@ -58,10 +56,10 @@ poblaciones = pd.read_csv('parametros/poblacion_sectores.csv', header=None).iloc
 p_s = {i: poblaciones[i] for i in range(len(poblaciones))}
 
 # m presupuesto
-m = 7280000000
+m = 1600000000
 
 # l demanda de agua por persona
-l = 60
+l = 15
 
 # n_s ponderador sector
 ponderadores = pd.read_csv('parametros/ponderadores_sector.csv', header=None).iloc[0].to_numpy()
@@ -210,7 +208,7 @@ for i in I:
 print("R16")
 
 # ------------------- Función objetivo -------------------
-funcion_objetivo = quicksum(w[i, j, s] * n_s[s] * d_ijs[(i, j, s)] for s in S for i in I for j in J)
+funcion_objetivo = quicksum(w[i, j, s] * n_s[s] * p_s[s] * d_ijs[(i, j, s)] for s in S for i in I for j in J)
 model.setObjective(funcion_objetivo, GRB.MINIMIZE)
 model.optimize()
 
@@ -231,8 +229,7 @@ for i in I:
     for j in J:
         for e in E:
             if x[i, j, e].x != 0:
-                if e != 5:
-                    print(f'X_({i, j, e}): {x[i, j, e].x}')
+                print(f'X_({i, j, e}): {x[i, j, e].x}')
                 num_sol += 1
                 cantidad_x += 1
 print(f'Cantidad de x: {cantidad_x}')
@@ -244,7 +241,11 @@ for i in I:
                 print(f'W_({i, j, s}): {w[i, j, s].x}   --   Q_({i, j, s}): {q[i, j, s].x}')
                 num_sol += 1
 
-
+for i in I:
+    for j in J:
+        for c in C:
+            if n[i, j, c].x != 0 and y[i, j, c].x != 0:
+                print(f'N_({i, j, c}): {n[i, j, c].x}   --   Y_({i, j, c}): {y[i, j, c].x}')
 
 for i in I:
     for j in J:
@@ -327,6 +328,70 @@ for i in I:
 #                 print(f'N_({i, j, c}): {n[i, j, c].x}')
 #                 num_sol += 1
 
+with open("resultados/resultados_N.csv", "w") as archivo: 
+    archivo.write("Variable N: i j c")
+    for i in I:
+        for j in J:
+            for c in C:
+                archivo.write(f" \n{int(n[i,j,c].x)}, {i}, {j}, {c}")
+
+with open("resultados/resultados_Q.csv", "w") as archivo: 
+    archivo.write("Variable Q: i j s")
+    for i in I:
+        for j in J:
+            for s in S:
+                archivo.write(f" \n{int(q[i,j,s].x)}, {i}, {j}, {s}")
+
+with open("resultados/resultados_W.csv", "w") as archivo: 
+    archivo.write("Variable W: i j s")
+    for i in I:
+        for j in J:
+            for s in S:
+                archivo.write(f" \n{int(w[i,j,s].x)}, {i}, {j}, {s}")
+
+with open("resultados/resultados_X.csv", "w") as archivo: 
+    archivo.write("Variable X: i j e")
+    for i in I:
+        for j in J:
+            for e in E:
+                archivo.write(f" \n{int(x[i,j,e].x)}, {i}, {j}, {e}")
+
+with open("resultados/resultados_Y.csv", "w") as archivo: 
+    archivo.write("Variable Y: i j c")
+    for i in I:
+        for j in J:
+            for c in C:
+                archivo.write(f" \n{int(y[i,j,c].x)}, {i}, {j}, {c}")
+
+# with open("resultados/resultados_T.csv", "w") as archivo: 
+#     archivo.write("Variable T: t, r1, r2")
+#     for t in T_:
+#         for r1 in R_:
+#             for r2 in R_:
+#                 archivo.write(f" \n{int(T[r1,r2,t].x)},  {t}, {r1}, {r2}")
+
+# with open("resultados/resultados_X.csv", "w") as archivo: 
+#     archivo.write("X,t,r,e")
+#     archivo.write(s_X)
+
+# with open("resultados/resultados_A.csv", "w") as archivo: 
+#     archivo.write("Variable A: t, r, e")
+#     archivo.write(s_A)
+
+# with open("resultados/resultados_AC.csv", "w") as archivo: 
+#     archivo.write("Variable AC: t, r, e")
+#     archivo.write(s_AC)
+
+# with open("resultados/resultados_Q.csv", "w") as archivo: 
+#     archivo.write("Variable Q: t, r, e")
+#     archivo.write(s_Q)
+
+# with open("resultados/resultados_QC.csv", "w") as archivo: 
+#     archivo.write("Variable QC: t, r, e")
+#     archivo.write(s_QC)
+
+# with open("resultados/resultados_D.csv", "w") as archivo: 
+#     archivo.write("Variable D: t, e")
 
 print(f"Tiempo: {tiempo_ejecucion}")
 
